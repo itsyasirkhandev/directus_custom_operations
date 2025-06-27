@@ -1,0 +1,247 @@
+{
+	"name": "directus-extension-my-bundle",
+	"version": "1.0.0",
+	"type": "module",
+	"directus:extension": {
+		"host": "^10.1.10",
+		"type": "bundle",
+		"path": {
+			"app": "dist/app.js",
+			"api": "dist/api.js"
+		},
+		"entries": [
+			{
+				"type": "endpoint",
+				"name": "my-api",
+				"source": "src/my-api/index.js"
+			},
+			{
+				"type": "hook",
+				"name": "my-hooks",
+				"source": "src/my-hooks/index.js"
+			},
+			{
+				"type": "endpoint",
+				"name": "email-sender",
+				"source": "src/email-sender/index.js"
+			},
+			{
+				"type": "endpoint",
+				"name": "err",
+				"source": "src/err/index.js"
+			},
+			{
+				"type": "operation",
+				"name": "store-variable",
+				"source": {
+					"app": "src/store-variable/app.js",
+					"api": "src/store-variable/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "generate-random-number",
+				"source": {
+					"app": "src/generate-random-number/app.js",
+					"api": "src/generate-random-number/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "precondition",
+				"source": {
+					"app": "src/precondition/app.js",
+					"api": "src/precondition/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "validate-required-query",
+				"source": {
+					"app": "src/validate-required-query/app.js",
+					"api": "src/validate-required-query/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "external-api-request",
+				"source": {
+					"app": "src/external-api-request/app.js",
+					"api": "src/external-api-request/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "string-manipulation",
+				"source": {
+					"app": "src/string-manipulation/app.js",
+					"api": "src/string-manipulation/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "get variable",
+				"source": {
+					"app": "src/get variable/app.js",
+					"api": "src/get variable/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "throw custom errore",
+				"source": {
+					"app": "src/throw custom errore/app.js",
+					"api": "src/throw custom errore/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "advance conditions",
+				"source": {
+					"app": "src/advance conditions/app.js",
+					"api": "src/advance conditions/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "Has Record",
+				"source": {
+					"app": "src/Has Record/app.js",
+					"api": "src/Has Record/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "condition builder",
+				"source": {
+					"app": "src/condition builder/app.js",
+					"api": "src/condition builder/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "multi replace string",
+				"source": {
+					"app": "src/multi replace string/app.js",
+					"api": "src/multi replace string/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "math tolkit",
+				"source": {
+					"app": "src/math tolkit/app.js",
+					"api": "src/math tolkit/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "Object Builder",
+				"source": {
+					"app": "src/Object Builder/app.js",
+					"api": "src/Object Builder/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "get environment variables",
+				"source": {
+					"app": "src/get environment variables/app.js",
+					"api": "src/get environment variables/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "Object Toolkit",
+				"source": {
+					"app": "src/Object Toolkit/app.js",
+					"api": "src/Object Toolkit/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "set",
+				"source": {
+					"app": "src/set/app.js",
+					"api": "src/set/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "For Each Loop",
+				"source": {
+					"app": "src/For Each Loop/app.js",
+					"api": "src/For Each Loop/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "Data_Converter",
+				"source": {
+					"app": "src/Data_Converter/app.js",
+					"api": "src/Data_Converter/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "Array Tolkit",
+				"source": {
+					"app": "src/Array Tolkit/app.js",
+					"api": "src/Array Tolkit/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "Generate AuthToken",
+				"source": {
+					"app": "src/Generate AuthToken/app.js",
+					"api": "src/Generate AuthToken/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "uuid generator",
+				"source": {
+					"app": "src/uuid generator/app.js",
+					"api": "src/uuid generator/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "send realtime events",
+				"source": {
+					"app": "src/send realtime events/app.js",
+					"api": "src/send realtime events/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "call another webhook",
+				"source": {
+					"app": "src/call another webhook/app.js",
+					"api": "src/call another webhook/api.js"
+				}
+			}
+		]
+	},
+	"description": "Please enter a description for your extension",
+	"icon": "extension",
+	"keywords": [
+		"directus",
+		"directus-extension",
+		"directus-custom-bundle"
+	],
+	"scripts": {
+		"build": "directus-extension build",
+		"dev": "directus-extension build -w --no-minify",
+		"link": "directus-extension link",
+		"add": "directus-extension add"
+	},
+	"devDependencies": {
+		"@directus/extensions-sdk": "12.1.4",
+		"@types/node": "^24.0.3",
+		"typescript": "^5.8.3",
+		"vue": "^3.5.17"
+	},
+	"dependencies": {}
+}

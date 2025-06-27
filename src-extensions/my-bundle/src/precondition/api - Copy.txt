@@ -1,0 +1,124 @@
+import { defineOperationApi } from '@directus/extensions-sdk';
+
+// Helper function for type conversion
+const tryConvert = (val) => {
+    if (val === null || typeof val === 'undefined') return val;
+    if (typeof val === 'boolean') return val;
+
+    const num = Number(val);
+    if (!isNaN(num) && (val.toString().trim() !== "" || num !== 0)) {
+        if (val.toString() === num.toString()) { // Ensures "123xyz" is not converted to 123
+           return num;
+        }
+    }
+
+    if (typeof val === 'string') {
+        const lowerVal = val.toLowerCase();
+        if (lowerVal === 'true') return true;
+        if (lowerVal === 'false') return false;
+    }
+    return val;
+};
+
+export default defineOperationApi({
+    id: 'precondition-gate', // Explicit ID as per your example structure
+    handler: async (
+        { value1, operator, value2, errorMessage }, // Options from app.js
+        { logger, services, schema, accountability, data, trigger } // Context
+    ) => {
+        let conditionMet = false;
+
+        let processedV1 = tryConvert(value1);
+        let processedV2 = (operator !== 'exists' && operator !== 'not_exists') ? tryConvert(value2) : undefined;
+
+        logger.debug(`Precondition Gate: Evaluating: [${JSON.stringify(processedV1)}] (${typeof processedV1}) ${operator} [${JSON.stringify(processedV2)}] (${typeof processedV2})`);
+
+        switch (operator) {
+            case 'eq':
+                conditionMet = processedV1 === processedV2;
+                break;
+            case 'neq':
+                conditionMet = processedV1 !== processedV2;
+                break;
+            case 'gt':
+                conditionMet = typeof processedV1 === 'number' && typeof processedV2 === 'number' && processedV1 > processedV2;
+                if (!(typeof processedV1 === 'number' && typeof processedV2 === 'number') && (processedV1 !== undefined && processedV2 !== undefined) ) {
+                    logger.warn(`Precondition Gate ('gt'): For numerical comparison, both values should ideally be numbers. Received types: ${typeof processedV1}, ${typeof processedV2}`);
+                }
+                break;
+            case 'lt':
+                conditionMet = typeof processedV1 === 'number' && typeof processedV2 === 'number' && processedV1 < processedV2;
+                 if (!(typeof processedV1 === 'number' && typeof processedV2 === 'number') && (processedV1 !== undefined && processedV2 !== undefined) ) {
+                    logger.warn(`Precondition Gate ('lt'): For numerical comparison, both values should ideally be numbers. Received types: ${typeof processedV1}, ${typeof processedV2}`);
+                }
+                break;
+            case 'gte':
+                conditionMet = typeof processedV1 === 'number' && typeof processedV2 === 'number' && processedV1 >= processedV2;
+                if (!(typeof processedV1 === 'number' && typeof processedV2 === 'number') && (processedV1 !== undefined && processedV2 !== undefined) ) {
+                    logger.warn(`Precondition Gate ('gte'): For numerical comparison, both values should ideally be numbers. Received types: ${typeof processedV1}, ${typeof processedV2}`);
+                }
+                break;
+            case 'lte':
+                conditionMet = typeof processedV1 === 'number' && typeof processedV2 === 'number' && processedV1 <= processedV2;
+                if (!(typeof processedV1 === 'number' && typeof processedV2 === 'number') && (processedV1 !== undefined && processedV2 !== undefined) ) {
+                    logger.warn(`Precondition Gate ('lte'): For numerical comparison, both values should ideally be numbers. Received types: ${typeof processedV1}, ${typeof processedV2}`);
+                }
+                break;
+            case 'exists':
+                conditionMet = value1 !== null && typeof value1 !== 'undefined';
+                break;
+            case 'not_exists':
+                conditionMet = value1 === null || typeof value1 === 'undefined';
+                break;
+            case 'contains':
+                if (typeof processedV1 === 'string' && typeof processedV2 === 'string') {
+                    conditionMet = processedV1.includes(processedV2);
+                } else if (Array.isArray(processedV1)) {
+                    conditionMet = processedV1.includes(processedV2);
+                } else {
+                    logger.warn(`Precondition Gate ('contains'): Value A should be a string or array for 'contains' operator. Received type: ${typeof processedV1}`);
+                    conditionMet = false;
+                }
+                break;
+            case 'not_contains':
+                if (typeof processedV1 === 'string' && typeof processedV2 === 'string') {
+                    conditionMet = !processedV1.includes(processedV2);
+                } else if (Array.isArray(processedV1)) {
+                    conditionMet = !processedV1.includes(processedV2);
+                } else {
+                     logger.warn(`Precondition Gate ('not_contains'): Value A should be a string or array for 'not_contains' operator. Received type: ${typeof processedV1}`);
+                    // If Value A is not a string or array, it inherently "does not contain" Value B.
+                    // Set to true, or false if this scenario should be an error or failed precondition.
+                    conditionMet = true;
+                }
+                break;
+            default:
+                logger.error(`Precondition Gate: Unknown operator specified: ${operator}`);
+                throw new Error(`Precondition Gate: Unknown operator "${operator}".`);
+        }
+
+        if (!conditionMet) {
+            const opDisplay = (operatorMap => operatorMap[operator] || operator)(/* pass the map here or define it again */ {
+                eq: '==', neq: '!=', gt: '>', lt: '<', gte: '>=', lte: '<=', exists: 'exists', not_exists: 'does not exist', contains: 'contains', not_contains: 'does not contain'
+            });
+            const val1Display = value1 === undefined ? 'undefined' : (value1 === null ? 'null' : JSON.stringify(value1));
+            const val2Display = value2 === undefined ? 'undefined' : (value2 === null ? 'null' : JSON.stringify(value2));
+
+            let defaultMsg = `Precondition failed: ${val1Display} ${opDisplay}`;
+            if (operator !== 'exists' && operator !== 'not_exists') {
+                defaultMsg += ` ${val2Display}`;
+            }
+
+            const finalErrorMessage = errorMessage || defaultMsg;
+            logger.info(`Precondition Gate: Condition NOT MET. Throwing error: ${finalErrorMessage}`);
+            throw new Error(finalErrorMessage);
+        }
+
+        logger.info('Precondition Gate: Condition MET. Flow continues.');
+        // This operation's purpose is to halt or pass, not transform data.
+        // So, we don't need to return any specific data object on success.
+        // Returning undefined (implicitly or explicitly) is fine.
+        // If you wanted to output a status, you could: return { success: true };
+        return;
+    },
+});

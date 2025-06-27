@@ -1,0 +1,136 @@
+export default {
+    id: 'precondition-gate', // Explicit ID
+    name: 'Precondition Gate',
+    icon: 'fact_check', // Or any icon you prefer, e.g., 'shield_question', 'gavel'
+    description: 'Halts the flow if a specified condition is not met. Throws an error if the condition evaluates to false.',
+    overview: ({ value1, operator, value2, errorMessage }) => {
+        const items = [];
+        let operatorText = operator;
+
+        // Map operator value to a more readable text for the overview
+        const operatorMap = {
+            eq: 'Equals (==)',
+            neq: 'Not Equals (!=)',
+            gt: 'Greater Than (>)',
+            lt: 'Less Than (<)',
+            gte: 'Greater Than or Equal (>=)',
+            lte: 'Less Than or Equal (<=)',
+            exists: 'Exists',
+            not_exists: 'Does Not Exist',
+            contains: 'Contains',
+            not_contains: 'Does Not Contain',
+        };
+        operatorText = operatorMap[operator] || operator;
+
+        if (value1 !== undefined && value1 !== null && value1 !== '') {
+            items.push({ label: 'Condition Value A', text: String(value1) });
+        } else {
+            items.push({ label: 'Condition Value A', text: 'Not set or empty' });
+        }
+
+        items.push({ label: 'Operator', text: operatorText || 'Not set' });
+
+        if (operator && operator !== 'exists' && operator !== 'not_exists') {
+            if (value2 !== undefined && value2 !== null && value2 !== '') {
+                items.push({ label: 'Condition Value B', text: String(value2) });
+            } else {
+                items.push({ label: 'Condition Value B', text: 'Not set or empty' });
+            }
+        }
+
+        if (errorMessage) {
+            items.push({ label: 'Custom Error', text: errorMessage });
+        }
+        return items;
+    },
+    options: [
+        {
+            field: 'value1',
+            name: 'Value A',
+            type: 'string',
+            meta: {
+                interface: 'input',
+                options: {
+                    placeholder: 'Enter value or use {{ $trigger... }}',
+                    trim: true,
+                },
+                width: 'half',
+                note: 'The first value for comparison. Can be dynamic data from the flow.',
+            },
+            schema: {
+                is_nullable: true, // Allow null/undefined for 'exists'/'not_exists' checks
+            },
+        },
+        {
+            field: 'operator',
+            name: 'Operator',
+            type: 'string',
+            meta: {
+                interface: 'select-dropdown',
+                options: {
+                    choices: [
+                        { text: 'Equals (==)', value: 'eq' },
+                        { text: 'Not Equals (!=)', value: 'neq' },
+                        { text: 'Greater Than (>)', value: 'gt' },
+                        { text: 'Less Than (<)', value: 'lt' },
+                        { text: 'Greater Than or Equal (>=)', value: 'gte' },
+                        { text: 'Less Than or Equal (<=)', value: 'lte' },
+                        { text: 'Exists (is not null/undefined)', value: 'exists' },
+                        { text: 'Does Not Exist (is null/undefined)', value: 'not_exists' },
+                        { text: 'Contains (for strings/arrays)', value: 'contains' },
+                        { text: 'Does Not Contain (for strings/arrays)', value: 'not_contains' },
+                    ],
+                    allowNone: false,
+                },
+                width: 'half',
+                note: 'The comparison logic to apply.',
+            },
+            schema: {
+                default_value: 'eq',
+            },
+        },
+        {
+            field: 'value2',
+            name: 'Value B',
+            type: 'string',
+            meta: {
+                interface: 'input',
+                options: {
+                    placeholder: 'Enter value or use {{ $trigger... }}',
+                    trim: true,
+                },
+                width: 'full',
+                note: 'The second value for comparison. Not used if operator is "Exists" or "Does Not Exist".',
+                conditions: [
+                    {
+                        rule: { operator: { _in: ['exists', 'not_exists'] } },
+                        hidden: true,
+                        required: false,
+                    },
+                    {
+                        rule: { operator: { _nin: ['exists', 'not_exists'] } },
+                        hidden: false,
+                        required: true, // Make it required if it's supposed to be visible
+                    },
+                ],
+            },
+            schema: {
+                is_nullable: true,
+            },
+        },
+        {
+            field: 'errorMessage',
+            name: 'Custom Error Message (Optional)',
+            type: 'string',
+            meta: {
+                interface: 'input',
+                options: {
+                    placeholder: 'e.g., User ID is missing or invalid.',
+                    trim: true,
+                },
+                width: 'full',
+                note: 'If the condition fails, this message will be used in the error. If empty, a default message is constructed.',
+            },
+        },
+    ],
+};
