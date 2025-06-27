@@ -1,99 +1,84 @@
+// /extensions/operations/simplified-flow-trigger/api.js
+
+import { defineOperationApi } from '@directus/extensions-sdk';
 import axios from 'axios';
-import { toBoolean } from '@directus/utils';
 
-export default {
-  id: 'trigger-flow-webhook',
-  handler: async (
-    { flow_url, payload, operation_key },
-    { services, database, getSchema, accountability, logger }
-  ) => {
-    try {
-      // Build payload from parameters
-      const requestBody = {};
-      
-      if (payload && payload.length > 0) {
-        for (const param of payload) {
-          try {
-            requestBody[param.key] = convertValueType(
-              param.value, 
-              param.type
-            );
-          } catch (error) {
-            logger.error(`Error processing parameter ${param.key}: ${error}`);
-            throw new Error(`Invalid parameter value for ${param.key}`);
-          }
-        }
-      }
+export default defineOperationApi({
+    id: 'simplified-flow-trigger',
+    handler: async (options, { logger, accountability }) => {
+        const {
+            method = 'POST',
+            url,
+            wait_for_response = true,
+            body_properties,
+            query_parameters,
+        } = options;
 
-      // Add Directus context similar to comment operation
-      if (accountability) {
-        requestBody.context = {
-          user: accountability.user,
-          role: accountability.role,
-          ip: accountability.ip,
-          userAgent: accountability.userAgent
+        if (!url) throw new Error('Webhook URL is required.');
+
+        // --- Helper function to build payload from the new UI ---
+        const buildPayload = (properties) => {
+            if (!Array.isArray(properties)) return {};
+            return properties.reduce((acc, prop) => {
+                if (!prop || !prop.key) return acc;
+                let value;
+                switch (prop.value_type) {
+                    case 'number':  value = prop.number_value; break;
+                    case 'boolean': value = prop.boolean_value; break;
+                    case 'json':    value = prop.json_value; break;
+                    default:        value = prop.string_value;
+                }
+                acc[prop.key] = value;
+                return acc;
+            }, {});
         };
-      }
 
-      // Trigger flow webhook
-      const response = await axios.post(flow_url, requestBody, {
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 10000,
-        validateStatus: (status) => status < 500
-      });
+        const config = {
+            method,
+            url,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': accountability.token ? `Bearer ${accountability.token}` : undefined,
+            },
+        };
 
-      // Handle and store response
-      const result = {
-        status: response.status,
-        data: response.data || null
-      };
+        // --- Construct payload or query params based on method ---
+        if (method === 'POST') {
+            config.data = buildPayload(body_properties);
+        } else if (method === 'GET' && Array.isArray(query_parameters)) {
+            config.params = query_parameters.reduce((acc, param) => {
+                if (param.key) acc[param.key] = param.value;
+                return acc;
+            }, {});
+        }
 
-      // Return with operation key as specified
-      return {
-        [operation_key]: result.data !== null ? result : null
-      };
-    } catch (error) {
-      // Handle Axios errors
-      if (error.response) {
-        const { status, data } = error.response;
-        throw new Error(`Flow trigger error ${status}: ${JSON.stringify(data)}`);
-      }
-      
-      // Handle timeout and network errors
-      if (error.code === 'ECONNABORTED') {
-        throw new Error('Flow trigger timed out (10s)');
-      }
-      
-      throw new Error(`Flow trigger failed: ${error.message}`);
-    }
-  }
-};
+        // --- Asynchronous Execution ("Fire and Forget") ---
+        if (wait_for_response === false) {
+            logger.info(`Executing ASYNC ${config.method} request to: ${config.url}`);
+            axios(config).catch(error => {
+                logger.error(`Async sub-flow trigger failed in the background: ${error.message}`);
+            });
+            return { status: 'triggered', mode: 'asynchronous' };
+        }
 
-// Value conversion with Directus utils
-function convertValueType(value, type) {
-  if (value === undefined || value === null) return null;
-  
-  switch (type) {
-    case 'number':
-      return Number(value);
-    case 'boolean':
-      return toBoolean(value);
-    case 'array':
-      try {
-        return Array.isArray(value) ? value : JSON.parse(value);
-      } catch {
-        return [value];
-      }
-    case 'object':
-      try {
-        return typeof value === 'object' ? value : JSON.parse(value);
-      } catch {
-        return { value };
-      }
-    case 'null':
-      return null;
-    case 'string':
-    default:
-      return String(value);
-  }
-}
+        // --- Synchronous Execution (Wait for Response) ---
+        logger.info(`Executing SYNC ${config.method} request to: ${config.url}`);
+        try {
+            const response = await axios(config);
+            return {
+                mode: 'synchronous',
+                status: response.status,
+                headers: response.headers,
+                data: response.data,
+            };
+        } catch (error) {
+            logger.error(`Sync sub-flow trigger failed: ${error.message}`);
+            if (error.response) {
+                throw new Error(
+                    `The triggered flow failed with status ${error.response.status}: ${JSON.stringify(error.response.data)}`
+                );
+            }
+            throw error;
+        }
+    },
+});

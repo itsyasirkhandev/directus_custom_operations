@@ -221,6 +221,22 @@
 					"app": "src/call another webhook/app.js",
 					"api": "src/call another webhook/api.js"
 				}
+			},
+			{
+				"type": "operation",
+				"name": "try catch block",
+				"source": {
+					"app": "src/try catch block/app.js",
+					"api": "src/try catch block/api.js"
+				}
+			},
+			{
+				"type": "operation",
+				"name": "Data senitizer and transformer",
+				"source": {
+					"app": "src/Data senitizer and transformer/app.js",
+					"api": "src/Data senitizer and transformer/api.js"
+				}
 			}
 		]
 	},
