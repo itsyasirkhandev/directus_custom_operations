@@ -237,6 +237,19 @@
 					"app": "src/Data senitizer and transformer/app.js",
 					"api": "src/Data senitizer and transformer/api.js"
 				}
+			},
+			{
+				"type": "operation",
+				"name": "file upload via url",
+				"source": {
+					"app": "src/file upload via url/app.js",
+					"api": "src/file upload via url/api.js"
+				}
+			},
+			{
+				"type": "endpoint",
+				"name": "upload-url",
+				"source": "src/upload-url/index.js"
 			}
 		]
 	},

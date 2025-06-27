@@ -4,7 +4,7 @@ export default {
     id: 'data-sanitizer-transformer',
     name: 'Data Sanitizer & Transformer',
     icon: 'auto_fix_high',
-    description: 'Applies a series of cleaning and transformation rules to an input object.',
+    description: 'Applies a cleaning and transformation rule to an input object.',
 
     overview: ({ rules }) => [
         {
@@ -49,15 +49,11 @@ export default {
                             },
                         },
                         {
-                            field: 'transformations',
-                            name: 'Transformations',
-                            type: 'json',
-                            // --- FIX: Added the schema property below ---
-                            schema: {
-                                default_value: [],
-                            },
+                            field: 'transformation', // FIX: Renamed to singular
+                            name: 'Transformation', // FIX: Renamed to singular
+                            type: 'string', // FIX: Changed type to string
                             meta: {
-                                interface: 'select-multiple',
+                                interface: 'select-dropdown', // FIX: Changed interface to a single dropdown
                                 width: 'full',
                                 options: {
                                     choices: [
@@ -65,7 +61,7 @@ export default {
                                         { text: 'To Lowercase', value: 'to_lowercase' },
                                         { text: 'To Uppercase', value: 'to_uppercase' },
                                         { text: 'Capitalize', value: 'capitalize' },
-                                        { text: 'Set Default Value', value: 'default_if_empty' },
+                                        { text: 'Set Default Value if Empty', value: 'default_if_empty' },
                                         { text: 'Convert to Number', value: 'to_number' },
                                         { text: 'Remove HTML Tags', value: 'strip_html' },
                                     ],
@@ -81,12 +77,13 @@ export default {
                                 interface: 'input',
                                 width: 'full',
                                 conditions: [
+                                    // FIX: Updated condition to check for equality
                                     {
-                                        rule: { transformations: { _contains: 'default_if_empty' } },
+                                        rule: { transformation: { _eq: 'default_if_empty' } },
                                         hidden: false,
                                     },
                                     {
-                                        rule: { transformations: { _ncontains: 'default_if_empty' } },
+                                        rule: { transformation: { _neq: 'default_if_empty' } },
                                         hidden: true,
                                     },
                                 ],
