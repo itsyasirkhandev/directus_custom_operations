@@ -3,7 +3,7 @@ import { createError } from '@directus/errors';
 
 export default defineOperationApi({
 	id: 'operation-send-realtime-event',
-	handler: async (options, { logger, services, accountability, getSchema }) => {
+	handler: async (options, { logger, services, getSchema }) => {
 		const { recipients, subject, message, collection, item } = options;
 
 		if (!recipients) throw new Error('You must specify at least one recipient.');
@@ -21,7 +21,6 @@ export default defineOperationApi({
 
 		try {
 			const schema = await getSchema();
-			// Use the ItemsService directly on the notifications collection
 			const notificationItemsService = new services.ItemsService('directus_notifications', {
 				accountability: serviceAccountability,
 				schema,
@@ -31,16 +30,15 @@ export default defineOperationApi({
 				recipient: userId,
 				subject: subject,
 				message: message || '',
-                collection: collection || null,
-                item: item || null,
+				collection: collection || null,
+				item: item || null,
 			}));
 			
-			// This is the key: we use createMany with emitEvents set to false.
-			// This creates the database records silently without triggering the email hook.
-			// The WebSocket server will still pick up the new records and push them.
-			const createdNotificationIds = await notificationItemsService.createMany(notificationsPayload, { emitEvents: false });
+			// This now emits an event, just like a native notification.
+			// The { emitEvents: false } option has been removed.
+			const createdNotificationIds = await notificationItemsService.createMany(notificationsPayload);
 
-			logger.info('Successfully created notifications without emitting events.', { ids: createdNotificationIds });
+			logger.info('Successfully created notifications.', { ids: createdNotificationIds });
 			return { sent_to: recipientIds, notification_ids: createdNotificationIds };
 
 		} catch (error) {

@@ -7,12 +7,19 @@
   },
   "version": "11.6.1",
   "scripts": {
-    "dev": "nodemon --watch src-extensions/my-bundle/src --ext js,ts,json,vue --exec \"bash script-quickstart.sh\""
+    "dev": "nodemon --watch src-extensions/my-bundle/src --ext js,ts,json,vue --exec \"bash script-quickstart.sh\"",
+    "start": "node index.cjs"
   },
   "dependencies": {
     "axios": "^1.9.0",
     "directus": "^11.8.0",
+    "pg": "^8.11.0"
+  },
+  "devDependencies": {
     "nodemon": "^3.1.9",
     "sqlite3": "^5.1.7"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
