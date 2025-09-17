@@ -4,28 +4,39 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
-# Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S directus -u 1001
-
-# Install system dependencies
+# Install system dependencies including bash (needed for the script)
 RUN apk add --no-cache \
     python3 \
     make \
     g++ \
-    sqlite
+    sqlite \
+    bash
 
-# Copy package files first for better Docker layer caching
-COPY package*.json ./
+# Copy package.json first
+COPY package.json ./
 
-# Install dependencies
-RUN npm ci --only=production --silent
+# Install main dependencies
+RUN npm install --silent
 
-# Copy application files
+# Copy all application files
 COPY . .
 
-# Create necessary directories and set permissions
-RUN mkdir -p /app/uploads /app/extensions && \
+# Install extension dependencies and build extensions
+RUN cd src-extensions/my-bundle && \
+    npm install --silent && \
+    npm run build
+
+# Create extensions directory structure and copy built extension
+RUN mkdir -p extensions/directus-extension-my-bundle uploads && \
+    cp -r src-extensions/my-bundle/dist extensions/directus-extension-my-bundle/ && \
+    cp src-extensions/my-bundle/package.json extensions/directus-extension-my-bundle/
+
+# Clean up dev dependencies from main app (keep extension deps for runtime)
+RUN npm prune --production
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S directus -u 1001 && \
     chown -R directus:nodejs /app
 
 # Switch to non-root user
